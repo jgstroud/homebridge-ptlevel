@@ -1,12 +1,12 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "PTLevel",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
       "name": {
-        "title": "Name",
+        "title": "Local IP of PTLevel",
         "type": "string",
         "required": true,
         "default": "Example Dynamic Platform"
