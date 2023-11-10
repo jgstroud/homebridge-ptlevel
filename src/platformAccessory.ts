@@ -87,12 +87,12 @@ export class ExamplePlatformAccessory {
     let newValue = 0;
 
     if (this.ptApi === apiType.localApi) {
-      const { data } = await axios.get('http://' + this.accessory.context.device.localIp + 'get_senors', {});
+      const { data } = await axios.get('http://' + this.accessory.context.device.localIp + '/get_sensors', {});
       const sensor_data = JSON.parse(data.local_s);
-      const zero = sensor_data[0].z;
+      const zero = sensor_data[0]['z'];
       const ad = sensor_data[0]['1'];
 
-      newValue = (ad - zero) * this.accessory.context.device.calFactor;
+      newValue = Math.round((ad - zero) * this.accessory.context.device.calFactor);
     } else if (this.ptApi === apiType.publicApi) {
       const { data } = await axios.get('https://www.mypt.in/device/' + this.accessory.context.device.cameraId, {});
       newValue = data.percentLevel;
@@ -113,8 +113,6 @@ export class ExamplePlatformAccessory {
   }
 
   async getLevel(): Promise<CharacteristicValue> {
-    return this.currentLevel;
+    return this.lastLevel;
   }
-
-
 }

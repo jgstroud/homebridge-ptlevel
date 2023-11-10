@@ -60,7 +60,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
-    const ptApi = apiType.publicApi;
+    const ptApi = apiType.localApi;
     const ptDevices = [
       {
         exampleUniqueId: '112233445566',
@@ -95,8 +95,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
         this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-        // existingAccessory.context.device = device;
-        // this.api.updatePlatformAccessories([existingAccessory]);
+        existingAccessory.context.device = device;
+        this.api.updatePlatformAccessories([existingAccessory]);
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
