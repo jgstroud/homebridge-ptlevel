@@ -2,15 +2,148 @@
   "pluginAlias": "PTLevel",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "PTLevel plug-in for [Homebridge](https://github.com/jstroud/homebridge-ptlevel)\n\nSee [PTLevel APIs](https://support.paremtech.com/portal/en/kb/articles/api-options) for information on the different API Types.\n\nLocal API is recommended as it does not rely on cloud access.",
   "schema": {
     "type": "object",
     "properties": {
       "name": {
-        "title": "Local IP of PTLevel",
+        "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "PTLevel",
+        "description": "The name that will appear in your homebridge log"
+      },
+      "apiMode": {
+        "title": "API Mode",
+        "type": "string",
+        "default": "local",
+        "oneOf": [
+          {
+            "title": "Token API",
+            "enum": [
+              "token"
+            ]
+          },
+          {
+            "title": "Public API",
+            "enum": [
+              "public"
+            ]
+          },
+          {
+            "title": "Local API",
+            "enum": [
+              "local"
+            ]
+          }
+        ],
+        "required": true
+      },
+      "refresh": {
+        "title": "Refresh Interval (s)",
+        "type": "integer",
+        "required": true,
+        "default": 60
+      },
+      "publicsensors": {
+        "title": "Public Sensors",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "title": "Sensor",
+          "properties": {
+            "sensorid": {
+              "type": "string",
+              "title": "Sensor ID",
+              "placeholder": "12345",
+              "required": true
+            }
+          }
+        }
+      },
+      "localsensors": {
+        "title": "Local Sensors",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "title": "Sensor",
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "placeholder": "Enter Sensor Name...",
+              "required": true
+            },
+            "sensorip": {
+              "type": "string",
+              "title": "Sensor Local IP Address",
+              "placeholder": "192.168.x.y",
+              "format": "ip-address",
+              "required": true
+            },
+            "calfactor": {
+              "type": "number",
+              "title": "Enter Calibration Factor",
+              "default": "0.243243",
+              "required": true
+            }
+          }
+        }
       }
     }
-  }
+  },
+  "layout": [
+    {
+      "type": "section",
+      "items": "name"
+    },
+    {
+      "type": "section",
+      "items": "apiMode"
+    },
+    {
+      "type": "section",
+      "items": "refresh"
+    },
+    {
+      "type": "section",
+      "key": "Local Sensors",
+      "expandable": true,
+      "expanded": true,
+      "condition": {
+        "functionBody": "return model.apiMode === 'local'"
+      },
+      "items": [
+        {
+          "key": "localsensors",
+          "type": "array",
+          "buttonText": "Add Sensor",
+          "items": [
+            "localsensors[].name",
+            "localsensors[].sensorip",
+            "localsensors[].calfactor"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "key": "Public Sensors",
+      "expandable": true,
+      "expanded": true,
+      "condition": {
+        "functionBody": "return model.apiMode === 'public'"
+      },
+      "items": [
+        {
+          "key": "publicsensors",
+          "type": "array",
+          "buttonText": "Add Sensor",
+          "items": [
+            "publicsensors[].sensorid"
+          ]
+        }
+      ]
+    }
+  ]
 }

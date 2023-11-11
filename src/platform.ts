@@ -1,25 +1,34 @@
+import axios from 'axios';
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { ExamplePlatformAccessory } from './platformAccessory';
+import { PTLevelPlatformAccessory } from './platformAccessory';
 
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export enum apiType {
+export enum PTapiType {
       tokenApi,
       publicApi,
       localApi
     }
 
-export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
+type ptDev = {
+  calFactor: number;
+  DeviceId: string;
+  TankDisplayName:string;
+};
+
+export class PTLevelHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+
+  public ptApi: PTapiType = PTapiType.localApi;
 
   constructor(
     public readonly log: Logger,
@@ -27,6 +36,21 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly api: API,
   ) {
     this.log.debug('Finished initializing platform:', this.config.name);
+
+    switch (this.config.apiMode) {
+      case 'token': {
+        this.ptApi = PTapiType.tokenApi;
+        break;
+      }
+      case 'public': {
+        this.ptApi = PTapiType.publicApi;
+        break;
+      }
+      case 'local': {
+        this.ptApi = PTapiType.localApi;
+        break;
+      }
+    }
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -60,70 +84,84 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
-    const ptApi = apiType.localApi;
-    const ptDevices = [
-      {
-        exampleUniqueId: '112233445566',
-        cameraId: '1234',
-        calFactor: 0.243243,
-        localIp: '192.168.33.194',
-        exampleDisplayName: 'Upper Tank',
-      },
-      {
-        exampleUniqueId: '778899aabbcc',
-        cameraId: '5678',
-        calFactor: 0.243243,
-        localIp: '192.168.33.171',
-        exampleDisplayName: 'Lower Tank',
-      },
-    ];
 
-    // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of ptDevices) {
+    const ptDevices: ptDev[] = [];
 
-      // generate a unique id for the accessory this should be generated from
-      // something globally unique, but constant, for example, the device serial
-      // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.exampleUniqueId);
-
-      // see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-
-      if (existingAccessory) {
-        // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
-        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-        existingAccessory.context.device = device;
-        this.api.updatePlatformAccessories([existingAccessory]);
-
-        // create the accessory handler for the restored accessory
-        // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, existingAccessory, ptApi);
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
-      } else {
-        // the accessory does not yet exist, so we need to create it
-        this.log.info('Adding new accessory:', device.exampleDisplayName);
-
-        // create a new accessory
-        const accessory = new this.api.platformAccessory(device.exampleDisplayName, uuid);
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
-        accessory.context.device = device;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, accessory, ptApi);
-
-        // link the accessory to your platform
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    if (this.ptApi === PTapiType.localApi) {
+      if (this.config.localsensors !== undefined) {
+        for (const sensor of this.config.localsensors) {
+          this.log.debug('Found Sensor', sensor.name, sensor.sensorip, sensor.calfactor);
+          const dev: ptDev = {
+            calFactor: sensor.calfactor,
+            DeviceId: sensor.sensorip,
+            TankDisplayName: sensor.name,
+          };
+          this.register_device(dev);
+        }
       }
+    } else if (this.ptApi === PTapiType.publicApi) {
+      if (this.config.publicsensors !== undefined) {
+        for (const sensor of this.config.publicsensors) {
+          let name;
+          axios.get('https://www.mypt.in/device/' + sensor.sensorid)
+            .then((response) => {
+              this.log.debug(response.data);
+              name = response.data.title;
+              this.log.debug('Found Sensor', name, sensor.sensorid);
+              const dev: ptDev = {
+                calFactor: 1,
+                DeviceId: sensor.sensorid,
+                TankDisplayName: name,
+              };
+              this.register_device(dev);
+            });
+        }
+      }
+    }
+  }
+
+  register_device(device: ptDev) {
+    // generate a unique id for the accessory this should be generated from
+    // something globally unique, but constant, for example, the device serial
+    // number or MAC address
+    const uuid = this.api.hap.uuid.generate(device.DeviceId);
+
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+
+      // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+      existingAccessory.context.device = device;
+      this.api.updatePlatformAccessories([existingAccessory]);
+
+      // create the accessory handler for the restored accessory
+      // this is imported from `platformAccessory.ts`
+      new PTLevelPlatformAccessory(this, existingAccessory);
+
+      // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
+      // remove platform accessories when no longer present
+      // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
+      // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
+    } else {
+      // the accessory does not yet exist, so we need to create it
+      this.log.info('Adding new accessory:', device.TankDisplayName);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(device.TankDisplayName, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new PTLevelPlatformAccessory(this, accessory);
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     }
   }
 }
