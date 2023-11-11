@@ -85,8 +85,6 @@ export class PTLevelHomebridgePlatform implements DynamicPlatformPlugin {
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
 
-    const ptDevices: ptDev[] = [];
-
     if (this.ptApi === PTapiType.localApi) {
       if (this.config.localsensors !== undefined) {
         for (const sensor of this.config.localsensors) {
