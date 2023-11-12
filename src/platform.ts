@@ -101,7 +101,9 @@ export class PTLevelHomebridgePlatform implements DynamicPlatformPlugin {
       if (this.config.publicsensors !== undefined) {
         for (const sensor of this.config.publicsensors) {
           let name;
-          axios.get('https://www.mypt.in/device/' + sensor.sensorid)
+          axios.get('https://www.mypt.in/device/' + sensor.sensorid, {
+            timeout: 5000, // Set a timeout of 5 seconds
+          })
             .then((response) => {
               this.log.debug(response.data);
               name = response.data.title;
@@ -112,6 +114,13 @@ export class PTLevelHomebridgePlatform implements DynamicPlatformPlugin {
                 TankDisplayName: name,
               };
               this.register_device(dev);
+            })
+            .catch(error => {
+              if (error.code === 'ECONNABORTED') {
+                this.log.debug('Request timed out accessing', sensor.sensorid);
+              } else {
+                this.log.debug(error.message);
+              }
             });
         }
       }

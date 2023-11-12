@@ -57,19 +57,48 @@ export class PTLevelPlatformAccessory {
 
   async pollLevel() {
     let newValue = 0;
+    let api_error = false;
 
     if (this.platform.ptApi === PTapiType.localApi) {
       //this.platform.log.debug('get http://' + this.accessory.context.device.DeviceId + '/get_sensors');
-      const { data } = await axios.get('http://' + this.accessory.context.device.DeviceId + '/get_sensors', {});
-      const sensor_data = JSON.parse(data.local_s);
-      const zero = sensor_data[0]['z'];
-      const ad = sensor_data[0]['1'];
+      await axios.get('http://' + this.accessory.context.device.DeviceId + '/get_sensors', {
+        timeout: 5000, // Set a timeout of 5 seconds
+      })
+        .then(response => {
+          const sensor_data = JSON.parse(response.data.local_s);
+          const zero = sensor_data[0]['z'];
+          const ad = sensor_data[0]['1'];
 
-      newValue = Math.round((ad - zero) * this.accessory.context.device.calFactor);
+          newValue = Math.round((ad - zero) * this.accessory.context.device.calFactor);
+        })
+        .catch(error => {
+          if (error.code === 'ECONNABORTED') {
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.DeviceId);
+          } else {
+            this.platform.log.debug(error.message);
+          }
+          api_error = true;
+        });
     } else if (this.platform.ptApi === PTapiType.publicApi) {
       //this.platform.log.debug('get https://www.mypt.in/device/' + this.accessory.context.device.DeviceId);
-      const { data } = await axios.get('https://www.mypt.in/device/' + this.accessory.context.device.DeviceId, {});
-      newValue = data.percentLevel;
+      await axios.get('https://www.mypt.in/device/' + this.accessory.context.device.DeviceId, {
+        timeout: 5000, // Set a timeout of 5 seconds
+      })
+        .then(response => {
+          newValue = response.data.percentLevel;
+        })
+        .catch(error => {
+          if (error.code === 'ECONNABORTED') {
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.DeviceId);
+          } else {
+            this.platform.log.debug(error.message);
+          }
+          api_error = true;
+        });
+    }
+
+    if (api_error) {
+      return;
     }
 
     //this.platform.log.debug(this.accessory.context.device.TankDisplayName, newValue);
