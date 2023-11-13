@@ -73,7 +73,8 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.DeviceId);
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.displayName,
+              this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
           }
@@ -89,7 +90,8 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.DeviceId);
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.displayName,
+              this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
           }
