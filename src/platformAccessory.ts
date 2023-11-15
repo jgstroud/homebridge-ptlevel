@@ -13,6 +13,7 @@ export class PTLevelPlatformAccessory {
   private service: Service;
 
   private lastLevel;
+  private lastConnectSuccess = false;
 
   constructor(
     private readonly platform: PTLevelHomebridgePlatform,
@@ -32,7 +33,7 @@ export class PTLevelPlatformAccessory {
 
     // set the service name, this is what is displayed as the default name on the Home app
     // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.TankDisplayName);
+    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.displayName);
 
     // register handlers for the On/Off Characteristic
     //this.service.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
@@ -73,7 +74,7 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.displayName,
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.displayName,
               this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
@@ -90,7 +91,7 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.displayName,
+            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.displayName,
               this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
@@ -100,14 +101,21 @@ export class PTLevelPlatformAccessory {
     }
 
     if (api_error) {
+      this.lastConnectSuccess = false;
       return;
     }
 
-    //this.platform.log.debug(this.accessory.context.device.TankDisplayName, newValue);
+    if (!this.lastConnectSuccess) {
+      this.platform.log.debug('Connection restored to', this.accessory.context.device.displayName,
+        this.accessory.context.device.DeviceId);
+    }
+    this.lastConnectSuccess = true;
+
+    //this.platform.log.debug(this.accessory.context.device.displayName, newValue);
 
     // push the new value to HomeKit
     if (newValue !== this.lastLevel) {
-      this.platform.log.debug('update', this.accessory.context.device.TankDisplayName, newValue);
+      this.platform.log.debug('update', this.accessory.context.device.displayName, newValue);
       this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, newValue);
     }
 
