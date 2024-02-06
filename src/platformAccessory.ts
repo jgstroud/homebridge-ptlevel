@@ -74,7 +74,7 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.displayName,
+            this.platform.log.info('Request timed out accessing', this.accessory.context.device.displayName,
               this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
@@ -91,7 +91,7 @@ export class PTLevelPlatformAccessory {
         })
         .catch(error => {
           if (error.code === 'ECONNABORTED') {
-            this.platform.log.debug('Request timed out accessing', this.accessory.context.device.displayName,
+            this.platform.log.info('Request timed out accessing', this.accessory.context.device.displayName,
               this.accessory.context.device.DeviceId);
           } else {
             this.platform.log.debug(error.message);
@@ -106,7 +106,7 @@ export class PTLevelPlatformAccessory {
     }
 
     if (!this.lastConnectSuccess) {
-      this.platform.log.debug('Connection restored to', this.accessory.context.device.displayName,
+      this.platform.log.info('Connection restored to', this.accessory.context.device.displayName,
         this.accessory.context.device.DeviceId);
     }
     this.lastConnectSuccess = true;
@@ -115,8 +115,9 @@ export class PTLevelPlatformAccessory {
 
     // push the new value to HomeKit
     if (newValue !== this.lastLevel) {
-      this.platform.log.debug('update', this.accessory.context.device.displayName, newValue);
+      this.platform.log.info('update', this.accessory.context.device.displayName, newValue);
       this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, newValue);
+      this.service.updateCharacteristic(this.platform.Characteristic.WaterLevel, newValue);
     }
 
     this.lastLevel = newValue;
