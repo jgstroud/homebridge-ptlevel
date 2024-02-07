@@ -29,4 +29,5 @@ Using the public API only requires that you enter the Sensor ID.  Refer to the [
 If using the Direct to Device API, can only read the raw ADC value.  To configure a local device you will need to give it a Name, IP Address and Calibration factor in order to convert the ADC value to a percent full.
 
 ## HomeKit integration
-Unfortunately HomeKit does not have a water tank device.  Only Humidifies support a water level characteristic.  This plug will expose the sensor as a Humidity Sensor and will also report a water level characteristic.  I chose to use a humidity sensor because HomeKit will allow you to setup actions based on Humidity Values.
+Unfortunately HomeKit does not have a water tank device.  Only Humidifies support a water level characteristic.  This plugn will expose the sensor as a Humidity Sensor and will also report a water level characteristic.  I chose to use a humidity sensor because HomeKit will allow you to setup actions based on Humidity Values.
+![HK Level Sensor](assets/hk_level_sensor.png)
