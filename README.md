@@ -30,4 +30,5 @@ If using the Direct to Device API, can only read the raw ADC value.  To configur
 
 ## HomeKit integration
 Unfortunately HomeKit does not have a water tank device.  Only Humidifies support a water level characteristic.  This plugn will expose the sensor as a Humidity Sensor and will also report a water level characteristic.  I chose to use a humidity sensor because HomeKit will allow you to setup actions based on Humidity Values.
-![HK Level Sensor](assets/hk_level_sensor.png)
+
+<img src="assets/hk_level_sensor.png" alt="HK Level Sensor" width="25%"/>
