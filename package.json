@@ -3,7 +3,7 @@
   "displayName": "PTLevel",
   "name": "homebridge-ptlevel",
   "version": "1.0.1",
-  "description": "A short description about what your plugin does.",
+  "description": "Homebridge plugin for PTLevel water tank level sensors",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
